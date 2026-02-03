@@ -266,9 +266,24 @@ def main():
 		
 		for p, f, c in zip(pred, frames, coords):
 			y1, y2, x1, x2 = c
+			# Resize prediction to match face rect
 			p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
 
-			f[y1:y2, x1:x2] = p
+			# --- Alpha Blending / Feathering ---
+			# Create a soft mask
+			mask = np.full((p.shape[0], p.shape[1]), 255, dtype=np.float32)
+			# Blur the mask to feather edges
+			mask = cv2.GaussianBlur(mask, (51, 51), 16) / 255.0
+			mask = np.dstack([mask, mask, mask]) # Make it 3-channel
+
+			# Region of interest from original frame
+			roi = f[y1:y2, x1:x2].astype(np.float32)
+			p_float = p.astype(np.float32)
+
+			# Linear blend
+			blended = (p_float * mask + roi * (1 - mask)).astype(np.uint8)
+
+			f[y1:y2, x1:x2] = blended
 			out.write(f)
 
 	out.release()

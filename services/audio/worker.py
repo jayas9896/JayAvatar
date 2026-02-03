@@ -53,6 +53,67 @@ def load_model():
     except Exception as e:
         logger.error(f"Failed to load TTS model: {e}")
 
+# --- Language & Transliteration Helpers ---
+try:
+    from langdetect import detect
+    # Heuristic keywords for South Asian languages in Roman script
+    TELUGU_KEYWORDS = ['nenu', 'meer', 'ela', 'unnaru', 'cheppu', 'baaga', 'namaskaram', 'andi', 'kudirithe']
+    HINDI_KEYWORDS = ['kya', 'kaise', 'hai', 'main', 'aap', 'nahi', 'karo', 'namaste']
+except ImportError:
+    detect = None
+
+try:
+    from indic_transliteration import sanscript
+    from indic_transliteration.sanscript import SchemeMap, SCHEME_ITRANS, SCHEME_TELUGU, SCHEME_DEVANAGARI
+except ImportError:
+    sanscript = None
+
+def detect_and_transliterate(text: str):
+    """
+    Detects if text is potential Romanized Telugu/Hindi and transliterates it.
+    Returns: (processed_text, language_code)
+    """
+    if not detect or not sanscript:
+        return text, "en"
+
+    # Lowercase for heuristic checking
+    lower_text = text.lower()
+    
+    # Simple Heuristic Check
+    is_telugu = any(w in lower_text for w in TELUGU_KEYWORDS)
+    is_hindi = any(w in lower_text for w in HINDI_KEYWORDS)
+    
+    if is_telugu:
+        logger.info("Detected Romanized TELUGU. Transliterating...")
+        # Assume ITRANS or simple romanization. Convert to Telugu Script.
+        # Note: ITRANS is safe-ish for standard roman.
+        native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.TELUGU)
+        return native_text, "te"
+        
+    if is_hindi:
+        logger.info("Detected Romanized HINDI. Transliterating...")
+        native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
+        return native_text, "hi"
+        
+    # Fallback to langdetect
+    try:
+        lang = detect(text)
+        if lang in ['te', 'hi']:
+            # Start logic: If langdetect says 'te' but text is ASCII, it means it detected it correctly?
+            # Usually langdetect fails on ascii, but if it succeeds, nice.
+            # But if text is ASCII, we MUST transliterate for XTTS to speak it natively?
+            # Actually XTTS matches script. If 'te' is passed but text is Latin, it mimics English accent.
+            # So we check if text is predominantly ASCII.
+            if text.isascii():
+                 # Force transliteration if we trust the detection
+                 target_scheme = sanscript.TELUGU if lang == 'te' else sanscript.DEVANAGARI
+                 native_text = sanscript.transliterate(text, sanscript.ITRANS, target_scheme)
+                 return native_text, lang
+        return text, "en" # Default to English
+    except:
+        return text, "en"
+# ------------------------------------------
+
 def process_job(queue: RedisQueue, job_id: str):
     logger.info(f"Processing job {job_id}")
     
@@ -86,21 +147,21 @@ def process_job(queue: RedisQueue, job_id: str):
             output_path = os.path.join(output_dir, f"{job_id}.wav")
         
         # Check for speaker reference
-        speaker_wav = "speaker.wav"  # Default expected file in local dir
-        # If payload has it, override?
-        if payload.get("voice_id"):
-             # simplistic handling
-             pass
+        speaker_wav = "speaker.wav" 
+        
+        # --- Language Auto-Detect Logic ---
+        # If user explicitly provided language in payload (TODO), use it.
+        # Otherwise auto-detect.
+        processed_text, lang_code = detect_and_transliterate(text)
+        logger.info(f"Text processed: '{text}' -> '{processed_text}' (Lang: {lang_code})")
+        # ----------------------------------
 
         if tts_model:
             if not os.path.exists(speaker_wav):
-                # Fallback or Error? 
-                # For now, let's error if missing as cloning needs it.
-                # Or create a dummy if we just want to test pipeline.
                 pass
 
             if os.path.exists(speaker_wav):
-                 tts_model.tts_to_file(text=text, file_path=output_path, speaker_wav=speaker_wav, language="en", split_sentences=False)
+                 tts_model.tts_to_file(text=processed_text, file_path=output_path, speaker_wav=speaker_wav, language=lang_code, split_sentences=False)
             else:
                  logger.warning(f"Speaker reference '{speaker_wav}' not found. Using default/random speaker if allowed (or failing).")
                  # XTTS might allow random speaker if not specified? 
