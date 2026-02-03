@@ -61,6 +61,39 @@ setup_service "Audio Service" "services/audio"
 # 3. Visual Service
 setup_service "Visual Service" "services/visual"
 
+# 4. Motion Service (SadTalker)
+setup_service "Motion Service" "services/motion"
+
+# --- SadTalker Specific: Download Weights ---
+echo ""
+echo "[INFO] Downloading SadTalker Checkpoints..."
+ST_CHECKPOINT_DIR="services/motion/SadTalker/checkpoints"
+ST_GFPGAN_DIR="services/motion/SadTalker/gfpgan/weights"
+mkdir -p "$ST_CHECKPOINT_DIR"
+mkdir -p "$ST_GFPGAN_DIR"
+
+download_if_missing() {
+    url=$1
+    dest=$2
+    if [ ! -f "$dest" ]; then
+        echo "      Downloading $(basename $dest)..."
+        wget -q --show-progress -O "$dest" "$url"
+    else
+        echo "      $(basename $dest) exists."
+    fi
+}
+
+download_if_missing "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/mapping_00109.pth" "$ST_CHECKPOINT_DIR/mapping_00109.pth"
+download_if_missing "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_256.safetensors" "$ST_CHECKPOINT_DIR/SadTalker_V0.0.2_256.safetensors"
+download_if_missing "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_512.safetensors" "$ST_CHECKPOINT_DIR/SadTalker_V0.0.2_512.safetensors"
+
+# Face Enhancer
+download_if_missing "https://github.com/xinntao/facexlib/releases/download/v0.1.0/alignment_WFLW_4HG.pth" "$ST_GFPGAN_DIR/alignment_WFLW_4HG.pth"
+download_if_missing "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth" "$ST_GFPGAN_DIR/GFPGANv1.4.pth"
+
+# Fix for common issue: download default config matching pytorch version if slightly off?
+# Not needed if we use safetensors.
+
 echo ""
 echo "=================================================="
 echo "[SUCCESS] All Microservices Re-Configured!"
@@ -70,4 +103,5 @@ echo "1. redis-server"
 echo "2. cd orchestrator && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000"
 echo "3. cd services/audio && source venv/bin/activate && python worker.py"
 echo "4. cd services/visual && source venv/bin/activate && python worker.py"
-echo "5. cd orchestrator && source venv/bin/activate && python pipeline_worker.py"
+echo "5. cd services/motion && source venv/bin/activate && python worker.py"
+echo "6. cd orchestrator && source venv/bin/activate && python pipeline_worker.py"
