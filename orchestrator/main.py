@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from schemas import JobRequest, JobResponse, VisualRequest
+from schemas import JobRequest, JobResponse, VisualRequest, PipelineRequest
 from queue_manager import RedisQueue
 import uvicorn
 
@@ -14,6 +14,11 @@ async def generate_audio(request: JobRequest):
 @app.post("/animate", response_model=JobResponse)
 async def animate_face(request: VisualRequest):
     job_id = queue.submit_job("visual", request.model_dump())
+    return JobResponse(job_id=job_id, status="queued")
+
+@app.post("/pipeline", response_model=JobResponse)
+async def run_pipeline(request: PipelineRequest):
+    job_id = queue.submit_job("pipeline", request.model_dump())
     return JobResponse(job_id=job_id, status="queued")
 
 @app.get("/status/{job_id}")

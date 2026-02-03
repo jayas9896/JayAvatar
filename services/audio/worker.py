@@ -76,7 +76,14 @@ def process_job(queue: RedisQueue, job_id: str):
         # 3. Generate Audio
         output_dir = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, f"{job_id}.wav")
+        
+        # Check if output_path is provided (Pipeline mode) or generate default
+        if payload.get("output_path"):
+            output_path = payload.get("output_path")
+            # Ensure dir exists for custom path
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        else:
+            output_path = os.path.join(output_dir, f"{job_id}.wav")
         
         # Check for speaker reference
         speaker_wav = "speaker.wav"  # Default expected file in local dir

@@ -61,7 +61,14 @@ def process_job(queue: RedisQueue, job_id: str):
         
         output_dir = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, f"{job_id}.mp4")
+        
+        # Check if output_path is provided (Pipeline mode) or generate default
+        if payload.get("output_path"):
+            output_path = payload.get("output_path")
+            # Ensure dir exists for custom path
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        else:
+            output_path = os.path.join(output_dir, f"{job_id}.mp4")
         
         result_path = os.path.abspath(output_path)
         

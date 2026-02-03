@@ -116,3 +116,31 @@ curl "http://localhost:8000/status/<job_id>"
 *   **Redis Connection Error**: Ensure `redis-server` is running.
 *   **GPU Errors**: If you see CUDA errors, ensure `FORCE_CPU=1` is set before running output workers.
 *   **Missing Dependencies**: Re-run `./setup_microservices.sh` or checks `requirements.txt` in the respective service folder.
+
+## 6. One-Shot Pipeline (Text -> Video)
+Automates the flow: Text -> Audio -> Video.
+
+### 1. Start Pipeline Worker (Terminal 5)
+```bash
+cd orchestrator
+source venv/bin/activate
+python pipeline_worker.py
+```
+
+### 2. Run Pipeline Job
+**Endpoint**: `POST /pipeline`
+
+**Command**:
+```bash
+curl -X POST "http://localhost:8000/pipeline" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "text": "This is a full pipeline executing correctly.",
+           "video_path": "/home/jayas/JayAvatar/services/visual/test_face.png"
+         }'
+```
+
+**Output**:
+A **Unified Directory** is created at `JayAvatar/outputs/<JOB_ID>/`, containing:
+*   `audio.wav`: The generated speech.
+*   `video.mp4`: The final lip-synced video.
