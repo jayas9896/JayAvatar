@@ -90,9 +90,11 @@ def detect_and_transliterate(text: str):
     is_hindi = any(w in lower_text for w in HINDI_KEYWORDS)
     
     if is_telugu:
-        logger.info("Detected Romanized TELUGU. Transliterating...")
-        native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.TELUGU)
-        return native_text, "te"
+        logger.info("Detected Romanized TELUGU. Transliterating to DEVANAGARI (for XTTS Hindi support)...")
+        # XTTS doesn't support 'te', but supports 'hi'. 
+        # Since phonetic mapping is close, we transliterate Telugu -> Devanagari
+        native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
+        return native_text, "hi"
         
     if is_hindi:
         logger.info("Detected Romanized HINDI. Transliterating...")
@@ -105,9 +107,9 @@ def detect_and_transliterate(text: str):
         if lang in ['te', 'hi']:
             if text.isascii():
                  # Force transliteration if we trust the detection
-                 target_scheme = sanscript.TELUGU if lang == 'te' else sanscript.DEVANAGARI
+                 target_scheme = sanscript.DEVANAGARI # Always use Devanagari for 'te' support in XTTS
                  native_text = sanscript.transliterate(text, sanscript.ITRANS, target_scheme)
-                 return native_text, lang
+                 return native_text, "hi"
         return text, "en" # Default to English
     except:
         return text, "en"
