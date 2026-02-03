@@ -161,7 +161,6 @@ def process_job(queue: RedisQueue, job_id: str):
                      speaker_wav=speaker_wav, 
                      language=lang_code, 
                      split_sentences=False,
-                     speed=1.1,
                      temperature=0.75
                  )
             else:
