@@ -131,7 +131,7 @@ def main():
     logger.info("Audio Worker listening for jobs...")
     while True:
         try:
-            job_id = queue.pop_job()
+            job_id = queue.pop_job("audio")
             if job_id:
                 process_job(queue, job_id)
             else:

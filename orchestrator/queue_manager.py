@@ -26,8 +26,9 @@ class RedisQueue:
         # 1. Save Job Data (Persistent)
         self.redis.hset(f"{self.JOB_PREFIX}{job_id}", mapping=job_data)
         
-        # 2. Push ID to Queue
-        self.redis.rpush(self.QUEUE_KEY, job_id)
+        # 2. Push ID to Queue (Separated by Type)
+        queue_name = f"{self.QUEUE_KEY}:{job_type}"
+        self.redis.rpush(queue_name, job_id)
         
         return job_id
 
@@ -48,7 +49,8 @@ class RedisQueue:
             
         self.redis.hset(f"{self.JOB_PREFIX}{job_id}", mapping=updates)
 
-    def pop_job(self) -> Optional[str]:
-        """Worker calls this to get next job ID."""
+    def pop_job(self, job_type: str) -> Optional[str]:
+        """Worker calls this to get next job ID for a specific type."""
         # Non-blocking pop. In prod, use blpop for blocking.
-        return self.redis.lpop(self.QUEUE_KEY)
+        queue_name = f"{self.QUEUE_KEY}:{job_type}"
+        return self.redis.lpop(queue_name)

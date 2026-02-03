@@ -136,52 +136,9 @@ def main():
     logger.info("Visual Worker listening for jobs...")
     while True:
         try:
-            # We want to pop jobs, but we need to filter for visual jobs?
-            # The current RedisQueue implementation uses a single list 'jayavatar:jobs:queue'
-            # If we pop a job, it removes it from the queue.
-            # If Orchestrator puts ALL jobs in one queue, we have a problem:
-            # Audio worker might pop a visual job or vice-versa.
-            
-            # SOLUTION FOR NOW:
-            # The `queue_manager.py` uses `lpop`.
-            # We should probably peek or have separate queues.
-            # However, looking at `pop_job` in queue_manager, it just lpops.
-            
-            # Since I cannot easily change the Orchestrator/Queue logic without refactoring:
-            # I will modify the worker to check the job type.
-            # If it's NOT 'visual', we have a race condition if we consume it.
-            # BUT: In a proper microservice, we'd have `jayavatar:jobs:queue:audio` and `...:visual`.
-            
-            # Let's check `queue_manager.py` content again via memory?
-            # It has `QUEUE_KEY = "jayavatar:jobs:queue"`.
-            # It accepts `job_type`.
-            
-            # REFACTOR REQUIRED?
-            # If I consume a job and it's for 'audio', I should put it back or forward it.
-            # Better approach: modify `queue_manager` to support specific queues?
-            # Or simplified approach for this session:
-            # peek? No, lpop is destructive.
-            
-            # Let's try to pop, check type. If not mine, push back to HEAD of queue (lpush).
-            # This is "optimistic" consumption.
-            
-            job_id = queue.pop_job()
+            job_id = queue.pop_job("visual")
             if job_id:
-                job_data = queue.get_job_status(job_id)
-                if job_data and job_data.get("type") == "visual":
-                    process_job(queue, job_id)
-                else:
-                    if job_data:
-                        # Not my job, return it to the queue (front)
-                        # We need access to redis client to do lpush
-                        # queue.redis.lpush(queue.QUEUE_KEY, job_id)
-                        # But wait, if audio worker is also aggressive, we might ping-pong.
-                        # For now, let's assume we won't submit mixed jobs in this test session.
-                        # Or implement the push back logic.
-                        queue.redis.lpush(queue.QUEUE_KEY, job_id)
-                        time.sleep(0.1) 
-                    else:
-                        logger.warning(f"Popped ghost job {job_id}")
+                process_job(queue, job_id)
             else:
                 time.sleep(1) # Poll interval
                 
