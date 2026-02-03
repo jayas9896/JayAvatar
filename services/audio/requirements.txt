@@ -1,9 +1,9 @@
-torch>=2.1.2 --index-url https://download.pytorch.org/whl/cu121
-transformers==4.36.2
-coqui-tts>=0.1.0
-pydub==0.25.1
-scipy==1.11.4
-flask==3.0.0
-requests==2.31.0
-python-dotenv==1.0.1
-redis>=5.0.1
+torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu121
+transformers>=4.42.0
+coqui-tts>=0.22.0
+pydub>=0.25.1
+scipy>=1.11.4
+flask>=3.0.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+redis>=5.0.0
