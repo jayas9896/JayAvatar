@@ -35,6 +35,7 @@ ENV/
 # Microservice Specific
 services/audio/outputs/
 services/visual/outputs/
+outputs/
 services/visual/Wav2Lip/checkpoints/
 services/visual/Wav2Lip/face_detection/detection/sfd/s3fd.pth
 
