@@ -266,13 +266,14 @@ def main():
 		
 		for p, f, c in zip(pred, frames, coords):
 			y1, y2, x1, x2 = c
-			# Resize prediction to match face rect
-			p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
-
 			# --- Alpha Blending / Feathering ---
-			# Create a soft mask
+			# Goal: Remove the hard "cut-out" edge around the generated lips.
+			# Method: Create a transparency mask, blur it (feathering), and alpha-blend 
+			# the generated lip region (p) with the original face (roi).
+			
+			# Create a soft mask (white)
 			mask = np.full((p.shape[0], p.shape[1]), 255, dtype=np.float32)
-			# Blur the mask to feather edges
+			# Blur the mask to feather edges (Kernel: 51x51, Sigma: 16)
 			mask = cv2.GaussianBlur(mask, (51, 51), 16) / 255.0
 			mask = np.dstack([mask, mask, mask]) # Make it 3-channel
 
@@ -280,7 +281,7 @@ def main():
 			roi = f[y1:y2, x1:x2].astype(np.float32)
 			p_float = p.astype(np.float32)
 
-			# Linear blend
+			# Linear blend: Output = (Generated * Mask) + (Original * (1 - Mask))
 			blended = (p_float * mask + roi * (1 - mask)).astype(np.uint8)
 
 			f[y1:y2, x1:x2] = blended

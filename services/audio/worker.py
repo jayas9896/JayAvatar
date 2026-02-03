@@ -91,13 +91,16 @@ def detect_and_transliterate(text: str):
     
     if is_telugu:
         logger.info("Detected Romanized TELUGU. Transliterating to DEVANAGARI (for XTTS Hindi support)...")
-        # XTTS doesn't support 'te', but supports 'hi'. 
-        # Since phonetic mapping is close, we transliterate Telugu -> Devanagari
+        # WORKAROUND: XTTS v2 supports 'hi' (Hindi) but not 'te' (Telugu).
+        # However, it can read Devanagari script phonetically with an Indian accent.
+        # Solution: Transliterate Telugu -> Devanagari and tell XTTS it is Hindi.
+        # This forces the model to speak the Telugu words correctly.
         native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
         return native_text, "hi"
         
     if is_hindi:
         logger.info("Detected Romanized HINDI. Transliterating...")
+        native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
         native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.DEVANAGARI)
         return native_text, "hi"
         
@@ -106,7 +109,7 @@ def detect_and_transliterate(text: str):
         lang = detect(text)
         if lang in ['te', 'hi']:
             if text.isascii():
-                 # Force transliteration if we trust the detection
+                 # Same workaround for heuristic detection fallbacks
                  target_scheme = sanscript.DEVANAGARI # Always use Devanagari for 'te' support in XTTS
                  native_text = sanscript.transliterate(text, sanscript.ITRANS, target_scheme)
                  return native_text, "hi"
