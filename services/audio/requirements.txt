@@ -3,6 +3,6 @@ coqui-tts>=0.1.0
 pydub==0.25.1
 scipy==1.11.4
 flask==3.0.0
-requests==2.31.0
+requests==2.32.4
 python-dotenv==1.0.1
 redis>=5.0.1
