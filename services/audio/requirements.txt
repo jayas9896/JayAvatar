@@ -1,7 +1,7 @@
 torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 torchaudio>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 transformers>=4.42.0
-coqui-tts>=0.22.0
+coqui-tts[codec]>=0.22.0
 pydub>=0.25.1
 scipy>=1.11.4
 flask>=3.0.0
