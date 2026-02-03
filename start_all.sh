@@ -9,6 +9,21 @@ LOG_DIR="$SCRIPT_DIR/logs"
 
 mkdir -p "$PID_DIR" "$LOG_DIR"
 
+# --- Stop any existing services first ---
+SERVICES=("orchestrator" "audio" "visual" "motion" "pipeline")
+for service in "${SERVICES[@]}"; do
+    PID_FILE="$PID_DIR/$service.pid"
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        if ps -p $OLD_PID > /dev/null 2>&1; then
+            echo "[*] Stopping existing $service (PID: $OLD_PID)..."
+            kill $OLD_PID 2>/dev/null
+            sleep 0.5
+        fi
+        rm -f "$PID_FILE"
+    fi
+done
+
 echo "=========================================="
 echo "     Starting JayAvatar Services"
 echo "=========================================="
