@@ -64,7 +64,7 @@ except ImportError:
 
 try:
     from indic_transliteration import sanscript
-    from indic_transliteration.sanscript import SchemeMap, SCHEME_ITRANS, SCHEME_TELUGU, SCHEME_DEVANAGARI
+    from indic_transliteration.sanscript import ITRANS, TELUGU, DEVANAGARI
 except ImportError:
     sanscript = None
 
@@ -85,8 +85,6 @@ def detect_and_transliterate(text: str):
     
     if is_telugu:
         logger.info("Detected Romanized TELUGU. Transliterating...")
-        # Assume ITRANS or simple romanization. Convert to Telugu Script.
-        # Note: ITRANS is safe-ish for standard roman.
         native_text = sanscript.transliterate(text, sanscript.ITRANS, sanscript.TELUGU)
         return native_text, "te"
         
@@ -99,11 +97,6 @@ def detect_and_transliterate(text: str):
     try:
         lang = detect(text)
         if lang in ['te', 'hi']:
-            # Start logic: If langdetect says 'te' but text is ASCII, it means it detected it correctly?
-            # Usually langdetect fails on ascii, but if it succeeds, nice.
-            # But if text is ASCII, we MUST transliterate for XTTS to speak it natively?
-            # Actually XTTS matches script. If 'te' is passed but text is Latin, it mimics English accent.
-            # So we check if text is predominantly ASCII.
             if text.isascii():
                  # Force transliteration if we trust the detection
                  target_scheme = sanscript.TELUGU if lang == 'te' else sanscript.DEVANAGARI
@@ -161,7 +154,16 @@ def process_job(queue: RedisQueue, job_id: str):
                 pass
 
             if os.path.exists(speaker_wav):
-                 tts_model.tts_to_file(text=processed_text, file_path=output_path, speaker_wav=speaker_wav, language=lang_code, split_sentences=False)
+                 # Added speed=1.1 to reduce robotic pauses, temperature=0.75 for stability
+                 tts_model.tts_to_file(
+                     text=processed_text, 
+                     file_path=output_path, 
+                     speaker_wav=speaker_wav, 
+                     language=lang_code, 
+                     split_sentences=False,
+                     speed=1.1,
+                     temperature=0.75
+                 )
             else:
                  logger.warning(f"Speaker reference '{speaker_wav}' not found. Using default/random speaker if allowed (or failing).")
                  # XTTS might allow random speaker if not specified? 
