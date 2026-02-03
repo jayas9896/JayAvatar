@@ -100,7 +100,7 @@ def process_job(queue: RedisQueue, job_id: str):
                 pass
 
             if os.path.exists(speaker_wav):
-                 tts_model.tts_to_file(text=text, file_path=output_path, speaker_wav=speaker_wav, language="en")
+                 tts_model.tts_to_file(text=text, file_path=output_path, speaker_wav=speaker_wav, language="en", split_sentences=False)
             else:
                  logger.warning(f"Speaker reference '{speaker_wav}' not found. Using default/random speaker if allowed (or failing).")
                  # XTTS might allow random speaker if not specified? 
