@@ -1,0 +1,27 @@
+# Task List: JayAvatar Microservices
+
+- [x] Explore existing workspace <!-- id: 0 -->
+- [x] Research and Select Tech Stack <!-- id: 1 -->
+- [x] Architecture Design (Microservices) <!-- id: 2 -->
+    - [x] Define Service Boundaries (Audio, Visual, Orchestrator)
+    - [x] Define Communication Protocol (Redis Queue)
+    - [x] Create API Specifications (Input/Output JSONs)
+- [x] Infrastructure Setup (WSL) <!-- id: 3 -->
+    - [x] Install Redis (using apt)
+    - [x] Create Master Setup Script (`setup_microservices.sh`)
+    - [x] **Service A: Audio Setup** (`venv_audio`, Coqui)
+    - [x] **Service B: Visual Setup** (`venv_visual`, Torch/CUDA)
+    - [x] **Orchestrator Setup** (`venv_orch`, FastAPI, Redis)
+- [/] **Implement Orchestrator** <!-- id: 4 -->
+    - [ ] Redis Queue Manager (`queue_manager.py`)
+    - [ ] API Endpoints (`main.py`)
+    - [ ] State Persistence & Recovery
+- [ ] Implement Audio Microservice <!-- id: 5 -->
+    - [ ] Worker Listener
+    - [ ] TTS Generation Logic
+- [ ] Implement Visual Microservice <!-- id: 6 -->
+    - [ ] Worker Listener
+    - [ ] Wav2Lip/SadTalker Inference Logic
+- [ ] Verification <!-- id: 7 -->
+    - [ ] Fault Tolerance Test (Kill process -> Resume)
+    - [ ] Full Pipeline Test
