@@ -1,4 +1,4 @@
-torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu121
+torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 transformers>=4.42.0
 coqui-tts>=0.22.0
 pydub>=0.25.1
