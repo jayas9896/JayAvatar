@@ -57,7 +57,13 @@ def load_model():
 try:
     from langdetect import detect
     # Heuristic keywords for South Asian languages in Roman script
-    TELUGU_KEYWORDS = ['nenu', 'meer', 'ela', 'unnaru', 'cheppu', 'baaga', 'namaskaram', 'andi', 'kudirithe']
+    # Expanded list for better coloquial detection
+    TELUGU_KEYWORDS = [
+        'nenu', 'meer', 'ela', 'unnaru', 'cheppu', 'baaga', 'namaskaram', 'andi', 'kudirithe',
+        'nuv', 'nuvvu', 'na', 'naa', 'koni', 'petti', 'petkoni', 'chey', 'ra', 'ent', 'entra', 
+        'undhi', 'untadhi', 'avunu', 'kaadu', 'manchiga', 'chapparisthunte', 'sheekuthava', 'modda',
+        'super', 'asalu', 'bro', 'brother', 'hello' 
+    ]
     HINDI_KEYWORDS = ['kya', 'kaise', 'hai', 'main', 'aap', 'nahi', 'karo', 'namaste']
 except ImportError:
     detect = None
