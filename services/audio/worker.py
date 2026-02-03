@@ -57,12 +57,11 @@ def load_model():
 try:
     from langdetect import detect
     # Heuristic keywords for South Asian languages in Roman script
-    # Expanded list for better coloquial detection
     TELUGU_KEYWORDS = [
         'nenu', 'meer', 'ela', 'unnaru', 'cheppu', 'baaga', 'namaskaram', 'andi', 'kudirithe',
-        'nuv', 'nuvvu', 'na', 'naa', 'koni', 'petti', 'petkoni', 'chey', 'ra', 'ent', 'entra', 
+        'nuv', 'nuvvu', 'naa', 'koni', 'petti', 'petkoni', 'chey', 'ra', 'ent', 'entra', 
         'undhi', 'untadhi', 'avunu', 'kaadu', 'manchiga', 'chapparisthunte', 'sheekuthava', 'modda',
-        'super', 'asalu', 'bro', 'brother', 'hello' 
+        'asalu'
     ]
     HINDI_KEYWORDS = ['kya', 'kaise', 'hai', 'main', 'aap', 'nahi', 'karo', 'namaste']
 except ImportError:
@@ -84,10 +83,11 @@ def detect_and_transliterate(text: str):
 
     # Lowercase for heuristic checking
     lower_text = text.lower()
+    words = set(lower_text.split()) # Tokenize for exact match
     
-    # Simple Heuristic Check
-    is_telugu = any(w in lower_text for w in TELUGU_KEYWORDS)
-    is_hindi = any(w in lower_text for w in HINDI_KEYWORDS)
+    # Simple Heuristic Check (Exact Word Match)
+    is_telugu = any(w in words for w in TELUGU_KEYWORDS)
+    is_hindi = any(w in words for w in HINDI_KEYWORDS)
     
     if is_telugu:
         logger.info("Detected Romanized TELUGU. Transliterating to DEVANAGARI (for XTTS Hindi support)...")
