@@ -35,15 +35,7 @@ for service in "${SERVICES[@]}"; do
     echo ""
 done
 
-# Redis
-read -p "Stop Redis server? (y/N): " stop_redis
-if [[ "$stop_redis" =~ ^[Yy]$ ]]; then
-    redis-cli shutdown 2>/dev/null && echo "  ✅ Redis stopped" || echo "  ⚠️  Redis not running"
-else
-    echo "  ⏭️  Skipped Redis"
-fi
-
-echo ""
 echo "=========================================="
 echo " Done!"
 echo "=========================================="
+echo "(Redis left running - managed as system daemon)"
