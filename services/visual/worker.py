@@ -116,6 +116,82 @@ def process_job(queue: RedisQueue, job_id: str):
             
         logger.info(f"Wav2Lip Output: {process.stdout}")
 
+        # --- GFPGAN Enhancement Step ---
+        try:
+            logger.info("Starting GFPGAN Face Enhancement...")
+            from gfpgan import GFPGANer
+            import cv2
+            
+            # 1. Setup GFPGAN
+            # Download weights if needed
+            model_url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
+            model_path = os.path.join(os.path.dirname(__file__), "gfpgan_weights.pth")
+            
+            if not os.path.exists(model_path):
+                logger.info("Downloading GFPGAN weights...")
+                import requests
+                r = requests.get(model_url, allow_redirects=True)
+                with open(model_path, 'wb') as f:
+                    f.write(r.content)
+            
+            restorer = GFPGANer(model_path=model_path, upscale=1, arch='clean', channel_multiplier=2, bg_upsampler=None)
+            
+            # 2. Process Video
+            vid = cv2.VideoCapture(result_path)
+            fps = vid.get(cv2.CAP_PROP_FPS)
+            w = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+            h = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            
+            enhanced_path = result_path.replace(".mp4", "_enhanced.mp4")
+            out = cv2.VideoWriter(enhanced_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+            
+            frame_count = 0
+            while True:
+                ret, frame = vid.read()
+                if not ret:
+                    break
+                
+                # Enhance
+                _, _, output = restorer.enhance(frame, has_aligned=False, only_center_face=False, paste_back=True)
+                out.write(output)
+                frame_count += 1
+            
+            vid.release()
+            out.release()
+            
+            # 3. Merge Audio back
+            # wav2lip result has audio, but we created a silent enhanced video.
+            # Use ffmpeg to merge original audio to enhanced video.
+            final_output = result_path # Overwrite original or keep separate? 
+            # Let's overwrite result_path with enhanced version if successful
+            
+            temp_path = result_path.replace(".mp4", "_temp_final.mp4")
+            # ffmpeg -i enhanced -i original -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 output
+            merge_cmd = [
+                "ffmpeg", "-y",
+                "-i", enhanced_path,
+                "-i", result_path,
+                "-c:v", "copy",
+                "-c:a", "copy",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                temp_path
+            ]
+            subprocess.run(merge_cmd, check=True)
+            
+            # Replace original
+            os.replace(temp_path, result_path)
+            os.remove(enhanced_path)
+            
+            logger.info(f"GFPGAN Enhancement complete. Frames: {frame_count}")
+            
+        except ImportError:
+            logger.warning("GFPGAN not installed. Skipping enhancement.")
+        except Exception as e:
+            logger.error(f"GFPGAN Enhancement failed: {e}. Returning raw Wav2Lip result.")
+            # We continue with original result_path if enhancement fails
+        # -------------------------------
+
         # 4. Success
         if not os.path.exists(result_path):
              raise Exception("Output file was not created by Wav2Lip.")
