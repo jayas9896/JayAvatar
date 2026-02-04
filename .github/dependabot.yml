@@ -1,0 +1,66 @@
+# Dependabot configuration
+# Checks for dependency updates weekly
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "python"
+
+  # Orchestrator requirements
+  - package-ecosystem: "pip"
+    directory: "/orchestrator"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "orchestrator"
+
+  # Audio service
+  - package-ecosystem: "pip"
+    directory: "/services/audio"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "audio"
+
+  # Visual service
+  - package-ecosystem: "pip"
+    directory: "/services/visual"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "visual"
+
+  # Motion service
+  - package-ecosystem: "pip"
+    directory: "/services/motion"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "motion"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
