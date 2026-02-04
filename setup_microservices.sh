@@ -91,8 +91,22 @@ download_if_missing "https://github.com/OpenTalker/SadTalker/releases/download/v
 download_if_missing "https://github.com/xinntao/facexlib/releases/download/v0.1.0/alignment_WFLW_4HG.pth" "$ST_GFPGAN_DIR/alignment_WFLW_4HG.pth"
 download_if_missing "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth" "$ST_GFPGAN_DIR/GFPGANv1.4.pth"
 
-# Fix for common issue: download default config matching pytorch version if slightly off?
-# Not needed if we use safetensors.
+# --- Post-Install Patches for Compatibility ---
+echo "[INFO] Applying compatibility patches..."
+
+# Patch 1: basicsr - torchvision.transforms.functional_tensor removed in newer torchvision
+BASICSR_DEG="services/motion/venv/lib/python3.12/site-packages/basicsr/data/degradations.py"
+if [ -f "$BASICSR_DEG" ]; then
+    sed -i 's/from torchvision.transforms.functional_tensor import rgb_to_grayscale/from torchvision.transforms.functional import rgb_to_grayscale/' "$BASICSR_DEG"
+    echo "      Patched basicsr for torchvision compatibility"
+fi
+
+# Patch 2: SadTalker - np.VisibleDeprecationWarning removed in NumPy 2.0
+SADTALKER_PREPROCESS="services/motion/SadTalker/src/face3d/util/preprocess.py"
+if [ -f "$SADTALKER_PREPROCESS" ]; then
+    sed -i 's/category=np.VisibleDeprecationWarning/category=DeprecationWarning/' "$SADTALKER_PREPROCESS"
+    echo "      Patched SadTalker for NumPy 2.0 compatibility"
+fi
 
 echo ""
 echo "=================================================="
