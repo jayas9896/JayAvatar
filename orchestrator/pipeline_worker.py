@@ -179,8 +179,15 @@ def process_pipeline_job(queue: RedisQueue, job_id: str):
         logger.error(f"Error processing pipeline job {job_id}: {e}")
         queue.update_job_status(job_id, "failed", error=str(e))
 
+
+# Configuration for parallel processing
+MAX_CONCURRENT_PIPELINES = int(os.environ.get("MAX_CONCURRENT_PIPELINES", "3"))
+
+
 def main():
-    logger.info("Pipeline Worker Initializing...")
+    from concurrent.futures import ThreadPoolExecutor
+    
+    logger.info(f"Pipeline Worker Initializing (max concurrent: {MAX_CONCURRENT_PIPELINES})...")
     
     try:
         queue = RedisQueue()
@@ -189,21 +196,40 @@ def main():
         return
 
     logger.info("Pipeline Worker listening for 'pipeline' jobs...")
-    while True:
-        try:
-            # Pop 'pipeline' type jobs
-            job_id = queue.pop_job("pipeline")
-            if job_id:
-                process_pipeline_job(queue, job_id)
-            else:
-                time.sleep(1)
+    
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PIPELINES) as executor:
+        futures = set()
+        
+        while True:
+            try:
+                # Remove completed futures
+                done_futures = {f for f in futures if f.done()}
+                for f in done_futures:
+                    try:
+                        f.result()  # Raise any exceptions
+                    except Exception as e:
+                        logger.error(f"Pipeline job exception: {e}")
+                futures -= done_futures
                 
-        except KeyboardInterrupt:
-            logger.info("Stopping worker...")
-            break
-        except Exception as e:
-            logger.error(f"Unexpected error in loop: {e}")
-            time.sleep(5)
+                # Only pop new jobs if we have capacity
+                if len(futures) < MAX_CONCURRENT_PIPELINES:
+                    job_id = queue.pop_job("pipeline")
+                    if job_id:
+                        logger.info(f"Submitting job {job_id} to thread pool ({len(futures)+1}/{MAX_CONCURRENT_PIPELINES})")
+                        future = executor.submit(process_pipeline_job, queue, job_id)
+                        futures.add(future)
+                    else:
+                        time.sleep(0.5)
+                else:
+                    time.sleep(0.5)
+                    
+            except KeyboardInterrupt:
+                logger.info("Stopping worker...")
+                break
+            except Exception as e:
+                logger.error(f"Unexpected error in loop: {e}")
+                time.sleep(5)
 
 if __name__ == "__main__":
     main()
+
