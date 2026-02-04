@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
 
 class JobRequest(BaseModel):
     text: str
@@ -13,6 +13,8 @@ class PipelineRequest(BaseModel):
     text: str
     video_path: str
     voice_id: Optional[str] = None
+    # Mode options: "motion" (SadTalker), "lipsync" (Wav2Lip), "emage" (future full-body)
+    mode: Literal["motion", "lipsync", "emage"] = "motion"
 
 class MotionRequest(BaseModel):
     source_image: str

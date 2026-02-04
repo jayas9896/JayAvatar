@@ -69,27 +69,46 @@ def process_pipeline_job(queue: RedisQueue, job_id: str):
             
         logger.info("Audio generation complete.")
 
-        # 6. Submit Motion Job (SadTalker - provides lip-sync + head motion + blinking)
+        # 6. Submit Visual/Motion Job based on mode
         video_output_path = os.path.join(master_output_dir, "video.mp4")
-        motion_payload = {
-            "source_image": video_input_path,  # SadTalker uses source_image
-            "driven_audio": audio_output_path,
-            "output_path": video_output_path
-        }
+        mode = payload.get("mode", "motion")  # Default to motion (SadTalker)
         
-        motion_job_id = queue.submit_job("motion", motion_payload)
-        logger.info(f"Submitted Motion Job {motion_job_id}. Waiting for completion...")
+        if mode == "lipsync":
+            # Wav2Lip - lip sync only (faster, but static head)
+            visual_payload = {
+                "audio_path": audio_output_path,
+                "video_path": video_input_path,
+                "output_path": video_output_path
+            }
+            job_id_visual = queue.submit_job("visual", visual_payload)
+            queue_name = "visual"
+            logger.info(f"Mode: lipsync (Wav2Lip). Submitted Visual Job {job_id_visual}")
+            
+        elif mode == "emage":
+            # Future: EMAGE full-body (not yet implemented)
+            raise NotImplementedError("EMAGE full-body mode not yet implemented. Use 'motion' or 'lipsync'.")
+            
+        else:  # mode == "motion" (default)
+            # SadTalker - lip sync + head motion + blinking
+            motion_payload = {
+                "source_image": video_input_path,
+                "driven_audio": audio_output_path,
+                "output_path": video_output_path
+            }
+            job_id_visual = queue.submit_job("motion", motion_payload)
+            queue_name = "motion"
+            logger.info(f"Mode: motion (SadTalker). Submitted Motion Job {job_id_visual}")
         
-        # 7. Wait for Motion Job
+        # 7. Wait for Visual/Motion Job
         while True:
-            motion_status = queue.get_job_status(motion_job_id)
-            if motion_status["status"] == "completed":
+            job_status = queue.get_job_status(job_id_visual)
+            if job_status["status"] == "completed":
                 break
-            elif motion_status["status"] == "failed":
-                raise Exception(f"Motion generation failed: {motion_status.get('error')}")
+            elif job_status["status"] == "failed":
+                raise Exception(f"{queue_name.capitalize()} generation failed: {job_status.get('error')}")
             time.sleep(1)
             
-        logger.info("Motion video generation complete.")
+        logger.info(f"{queue_name.capitalize()} video generation complete.")
         
         # 8. Success
         queue.update_job_status(job_id, "completed", result=video_output_path)
