@@ -7,7 +7,7 @@ torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 torchvision>=0.19.0 --index-url https://download.pytorch.org/whl/cu130
 torchaudio>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 transformers>=4.47.0
-numpy>=1.26.0,<2.0
+numpy>=1.26.0,<3.0
 scipy>=1.14.0
 
 # Audio (Coqui XTTS)
