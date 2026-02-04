@@ -1,146 +1,132 @@
-# JayAvatar - Usage Guide
+# JayAvatar Usage Guide
 
-This guide explains how to start the microservices, trigger jobs, and find the generated outputs.
+## Quick Start
 
-## 1. Prerequisites
-Ensure you are in the **WSL** environment (Ubuntu) and have run the setup script:
 ```bash
-./setup_microservices.sh
+# Start all services
+./start_all.sh
+
+# Check status
+curl http://localhost:8000/health
 ```
 
-## 2. Starting the Services
-You need to run each component in a separate terminal window (or use `tmux`).
+## Pipeline API
 
-### Terminal 1: Redis
-Start the Redis server (if not already running as a service):
+Generate talking avatar videos from text.
+
+### Endpoint
+```
+POST http://localhost:8000/pipeline
+```
+
+### Request Body
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `text` | string | ✅ | - | The text to speak |
+| `video_path` | string | ✅ | - | Path to face image/video |
+| `voice_id` | string | ❌ | null | Custom voice reference |
+| `mode` | string | ❌ | `"motion"` | Animation mode (see below) |
+
+### Animation Modes
+
+| Mode | Engine | Features | Speed |
+|------|--------|----------|-------|
+| `"motion"` | SadTalker | Lip-sync + head motion + blinking | ~60s |
+| `"lipsync"` | Wav2Lip | Lip-sync only (static head) | ~15s |
+| `"emage"` | EMAGE | Full body + gestures (coming soon) | TBD |
+
+### Examples
+
+**Default (natural head motion):**
 ```bash
-redis-server
+curl -X POST "http://localhost:8000/pipeline" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, this is a test with natural head movement.",
+    "video_path": "/path/to/face.jpg"
+  }'
 ```
 
-### Terminal 2: Orchestrator
-The API server that manages jobs.
+**Fast lip-sync only:**
 ```bash
-cd orchestrator
-source venv/bin/activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-*   **URL**: `http://localhost:8000`
-*   **Docs**: `http://localhost:8000/docs` (Swagger UI)
-
-### Terminal 3: Audio Service (TTS)
-Generates audio from text using Coqui TTS.
-```bash
-cd services/audio
-source venv/bin/activate
-# Note: FORCE_CPU=1 is required for RTX 50-series compatibility with current PyTorch versions
-FORCE_CPU=1 python worker.py
+curl -X POST "http://localhost:8000/pipeline" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Quick lip sync without head motion.",
+    "video_path": "/path/to/face.jpg",
+    "mode": "lipsync"
+  }'
 ```
 
-### Terminal 4: Visual Service (Wav2Lip)
-Lip-syncs a face image/video to audio.
-```bash
-cd services/visual
-source venv/bin/activate
-FORCE_CPU=1 python worker.py
-```
+### Response
 
----
-
-## 3. How to Run (Process Flow)
-
-### Step 1: Generate Audio (TTS)
-Send a POST request to `/generate`.
-
-**Input**:
-*   `text`: The text to speak.
-*   `voice_id`: (Optional) Voice ID for Coqui TTS (defaults to `speaker.wav` cloning).
-
-**Command**:
-```bash
-curl -X POST "http://localhost:8000/generate" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "Hello, this is a test of the JayAvatar system."}'
-```
-
-**Response**:
-```json
-{"job_id": "uuid-string", "status": "queued"}
-```
-**Output Location**: `services/audio/outputs/<job_id>.wav`
-
-### Step 2: Animate Face (Wav2Lip)
-Once you have an audio file (from Step 1 or elsewhere) and a face image/video, send a request to `/animate`.
-
-**Input**:
-*   `audio_path`: Absolute path to the audio file.
-*   `video_path`: Absolute path to the face image or video.
-
-**Command**:
-```bash
-curl -X POST "http://localhost:8000/animate" \
-     -H "Content-Type: application/json" \
-     -d '{
-           "audio_path": "/home/jayas/JayAvatar/services/audio/outputs/<AUDIO_JOB_ID>.wav",
-           "video_path": "/home/jayas/JayAvatar/services/visual/test_face.png"
-         }'
-```
-*(Note: Replace `<AUDIO_JOB_ID>` with the actual ID from Step 1, or use any valid path)*
-
-**Response**:
-```json
-{"job_id": "uuid-string", "status": "queued"}
-```
-**Output Location**: `services/visual/outputs/<job_id>.mp4`
-
----
-
-## 4. Checking Job Status
-You can check the status of any job (audio or visual) using its Job ID.
-
-**Command**:
-```bash
-curl "http://localhost:8000/status/<job_id>"
-```
-
-**Response (Example)**:
 ```json
 {
-  "id": "...",
-  "status": "completed",
-  "result": "/home/jayas/JayAvatar/services/visual/outputs/....mp4",
-  ...
+  "job_id": "abc123-...",
+  "status": "queued"
 }
 ```
 
-## 5. Troubleshooting
-*   **Redis Connection Error**: Ensure `redis-server` is running.
-*   **GPU Errors**: If you see CUDA errors, ensure `FORCE_CPU=1` is set before running output workers.
-*   **Missing Dependencies**: Re-run `./setup_microservices.sh` or checks `requirements.txt` in the respective service folder.
+### Check Job Status
 
-## 6. One-Shot Pipeline (Text -> Video)
-Automates the flow: Text -> Audio -> Video.
-
-### 1. Start Pipeline Worker (Terminal 5)
 ```bash
-cd orchestrator
-source venv/bin/activate
-python pipeline_worker.py
+curl http://localhost:8000/status/{job_id}
 ```
 
-### 2. Run Pipeline Job
-**Endpoint**: `POST /pipeline`
+### Output Location
 
-**Command**:
+Videos are saved to: `outputs/{job_id}/video.mp4`
+
+---
+
+## Individual Services
+
+### Audio Generation (TTS)
 ```bash
-curl -X POST "http://localhost:8000/pipeline" \
-     -H "Content-Type: application/json" \
-     -d '{
-           "text": "This is a full pipeline executing correctly.",
-           "video_path": "/home/jayas/JayAvatar/services/visual/test_face.png"
-         }'
+curl -X POST "http://localhost:8000/generate" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello world"}'
 ```
 
-**Output**:
-A **Unified Directory** is created at `JayAvatar/outputs/<JOB_ID>/`, containing:
-*   `audio.wav`: The generated speech.
-*   `video.mp4`: The final lip-synced video.
+### Visual Only (Wav2Lip)
+```bash
+curl -X POST "http://localhost:8000/animate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "audio_path": "/path/to/audio.wav",
+    "video_path": "/path/to/face.jpg"
+  }'
+```
+
+### Motion Only (SadTalker)
+```bash
+curl -X POST "http://localhost:8000/motion" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_image": "/path/to/face.jpg",
+    "driven_audio": "/path/to/audio.wav"
+  }'
+```
+
+---
+
+## Service Management
+
+| Script | Description |
+|--------|-------------|
+| `./start_all.sh` | Start all services |
+| `./stop_all.sh` | Stop all services |
+| `./start_interactive.sh` | Start with Y/N prompts |
+| `./stop_interactive.sh` | Stop with Y/N prompts |
+| `./restart_interactive.sh` | Restart with Y/N prompts |
+
+## Logs
+
+```bash
+tail -f logs/orchestrator.log  # API server
+tail -f logs/audio.log         # TTS worker
+tail -f logs/visual.log        # Wav2Lip worker
+tail -f logs/motion.log        # SadTalker worker
+tail -f logs/pipeline.log      # Pipeline orchestrator
+```
