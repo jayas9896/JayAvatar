@@ -121,6 +121,46 @@ curl -X POST "http://localhost:8000/motion" \
 | `./stop_interactive.sh` | Stop with Y/N prompts |
 | `./restart_interactive.sh` | Restart with Y/N prompts |
 
+---
+
+## Configuration
+
+Settings are loaded from `config.yaml` with environment variable overrides.
+
+### Edit `config.yaml`
+
+```yaml
+pipeline:
+  max_concurrent: 3      # Parallel pipeline jobs
+
+motion:
+  timeout_seconds: 300   # 5 min timeout
+  size: 512              # Video resolution
+  still: true            # Anchor face position
+
+audio:
+  timeout_seconds: 120
+
+visual:
+  timeout_seconds: 180
+```
+
+### Environment Variable Overrides
+
+| Setting | Env Var | Default |
+|---------|---------|---------|
+| Pipeline concurrency | `MAX_CONCURRENT_PIPELINES` | 3 |
+| Motion timeout | `MOTION_TIMEOUT` | 300s |
+| Audio timeout | `AUDIO_TIMEOUT` | 120s |
+| Visual timeout | `VISUAL_TIMEOUT` | 180s |
+
+**Example:**
+```bash
+MAX_CONCURRENT_PIPELINES=5 MOTION_TIMEOUT=600 ./start_all.sh
+```
+
+---
+
 ## Logs
 
 ```bash
@@ -130,3 +170,4 @@ tail -f logs/visual.log        # Wav2Lip worker
 tail -f logs/motion.log        # SadTalker worker
 tail -f logs/pipeline.log      # Pipeline orchestrator
 ```
+

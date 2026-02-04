@@ -180,8 +180,12 @@ def process_pipeline_job(queue: RedisQueue, job_id: str):
         queue.update_job_status(job_id, "failed", error=str(e))
 
 
-# Configuration for parallel processing
-MAX_CONCURRENT_PIPELINES = int(os.environ.get("MAX_CONCURRENT_PIPELINES", "3"))
+# Import config module
+try:
+    import config
+    MAX_CONCURRENT_PIPELINES = config.pipeline_max_concurrent()
+except ImportError:
+    MAX_CONCURRENT_PIPELINES = int(os.environ.get("MAX_CONCURRENT_PIPELINES", "3"))
 
 
 def main():

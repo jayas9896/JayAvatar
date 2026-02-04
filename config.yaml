@@ -1,0 +1,56 @@
+# JayAvatar Configuration
+# Edit these values to customize behavior. Environment variables override these.
+
+# =============================================================================
+# PIPELINE SETTINGS
+# =============================================================================
+pipeline:
+  # Maximum concurrent pipeline jobs (each pipeline orchestrates audio + motion)
+  # Higher values = more parallelism, but more VRAM pressure
+  # Recommended: 2-4 for 8GB VRAM, 4-8 for 24GB VRAM
+  max_concurrent: 3
+
+# =============================================================================
+# MOTION SERVICE (SadTalker)
+# =============================================================================
+motion:
+  # Timeout in seconds before a job is killed
+  # SadTalker typically takes 60-120s depending on audio length
+  timeout_seconds: 300
+  
+  # Video resolution (256 or 512)
+  size: 512
+  
+  # Preprocessing mode: 'crop', 'resize', 'full', 'extcrop', 'extfull'
+  preprocess: full
+  
+  # Keep face anchored (recommended for full-body images)
+  still: true
+  
+  # Face enhancer: 'gfpgan' or null
+  enhancer: gfpgan
+
+# =============================================================================
+# AUDIO SERVICE (XTTS)
+# =============================================================================
+audio:
+  # Timeout in seconds
+  timeout_seconds: 120
+  
+  # Default language if detection fails
+  default_language: en
+
+# =============================================================================
+# VISUAL SERVICE (Wav2Lip)
+# =============================================================================
+visual:
+  # Timeout in seconds
+  timeout_seconds: 180
+
+# =============================================================================
+# REDIS
+# =============================================================================
+redis:
+  host: localhost
+  port: 6379
+  db: 0

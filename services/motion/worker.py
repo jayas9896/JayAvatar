@@ -61,8 +61,13 @@ def process_job(queue: RedisQueue, job_id: str):
             '--still',                  # Anchor face position (prevents floating)
         ]
 
-        # Timeout configuration (5 minutes)
-        TIMEOUT_SECONDS = 300
+        # Timeout configuration from config.yaml or env var
+        try:
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'orchestrator'))
+            import config
+            TIMEOUT_SECONDS = config.motion_timeout()
+        except ImportError:
+            TIMEOUT_SECONDS = int(os.environ.get("MOTION_TIMEOUT", "300"))
         
         logger.info(f"[{job_id[:8]}] Starting SadTalker (timeout: {TIMEOUT_SECONDS}s)")
         logger.info(f"[{job_id[:8]}] Source: {os.path.basename(source_image)}")
