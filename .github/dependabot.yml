@@ -1,5 +1,5 @@
 # Dependabot configuration
-# Checks for dependency updates weekly
+# Checks for dependency updates daily
 
 version: 2
 updates:
@@ -7,8 +7,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
@@ -20,7 +19,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/orchestrator"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
@@ -30,7 +29,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/services/audio"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
@@ -40,7 +39,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/services/visual"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
@@ -50,7 +49,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/services/motion"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
@@ -60,7 +59,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     labels:
       - "dependencies"
       - "ci"
+
