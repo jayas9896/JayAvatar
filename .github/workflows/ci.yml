@@ -27,7 +27,7 @@ jobs:
           ruff check orchestrator/ --ignore E501,F401,E722,F841 --exit-zero
           echo "Lint check completed (non-blocking)"
 
-  verify:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,9 +40,7 @@ jobs:
       - name: Install dependencies
         run: pip install redis pydantic fastapi pyyaml
       
-      - name: Verify imports
-        run: |
-          python -c "from orchestrator.schemas import PipelineRequest; print('✓ Schemas OK')"
-          python -c "from orchestrator.config import pipeline_max_concurrent; print('✓ Config OK')"
-          echo "All imports verified!"
+      - name: Run tests
+        run: python tests/test_basic.py
+
 
