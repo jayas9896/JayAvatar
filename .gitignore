@@ -41,3 +41,7 @@ services/visual/Wav2Lip/face_detection/detection/sfd/s3fd.pth
 
 # Logs
 *.log
+
+# Runtime files
+.pids/
+logs/
