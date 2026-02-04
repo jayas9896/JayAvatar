@@ -3,7 +3,7 @@
 torch>=2.4.0
 torchvision>=0.19.0
 torchaudio>=2.4.0
-numpy>=1.26.0,<2.0
+numpy>=1.26.0,<3.0
 face_alignment>=1.4.0
 imageio>=2.35.0
 imageio-ffmpeg>=0.5.0
