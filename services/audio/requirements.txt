@@ -1,12 +1,13 @@
+# Audio service requirements - security updated
 torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 torchaudio>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
-transformers>=4.42.0
+transformers>=4.47.0
 coqui-tts[codec]>=0.22.0
 pydub>=0.25.1
-scipy>=1.11.4
-flask>=3.0.0
+scipy>=1.14.0
+flask>=3.1.0
 requests>=2.32.0
-python-dotenv>=1.0.0
-redis>=5.0.0
+python-dotenv>=1.0.1
+redis>=5.2.0
 indic-transliteration>=2.3.0
 langdetect>=1.0.0

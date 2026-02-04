@@ -1,3 +1,4 @@
+# Visual service requirements - security updated
 torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
 torchvision>=0.19.0 --index-url https://download.pytorch.org/whl/cu130
 torchaudio>=2.4.0 --index-url https://download.pytorch.org/whl/cu130
@@ -6,8 +7,9 @@ opencv-python>=4.10.0
 ffmpeg-python>=0.2.0
 facexlib>=0.3.0
 gfpgan>=1.3.8
-flask>=3.0.0
+flask>=3.1.0
 requests>=2.32.0
-redis>=5.0.0
+redis>=5.2.0
 librosa>=0.10.0
-numba>=0.59.0
+numba>=0.60.0
+pillow>=11.0.0
