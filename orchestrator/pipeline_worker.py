@@ -4,6 +4,7 @@ import time
 import json
 import logging
 import redis
+import wave
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -17,6 +18,61 @@ try:
 except ImportError:
     logger.error("Could not import queue_manager.")
     sys.exit(1)
+
+
+def generate_srt_file(text: str, audio_path: str, output_path: str):
+    """
+    Generate an SRT subtitle file from text and audio duration.
+    Splits text into chunks and distributes across the audio duration.
+    """
+    # Get audio duration
+    try:
+        with wave.open(audio_path, 'rb') as audio:
+            frames = audio.getnframes()
+            rate = audio.getframerate()
+            duration = frames / float(rate)
+    except Exception as e:
+        logger.warning(f"Could not read audio duration: {e}. Using 10s default.")
+        duration = 10.0
+    
+    # Split text into sentences or chunks
+    import re
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    if not sentences:
+        sentences = [text]
+    
+    # Calculate time per sentence
+    time_per_sentence = duration / len(sentences)
+    
+    # Generate SRT content
+    srt_content = []
+    current_time = 0.0
+    
+    for i, sentence in enumerate(sentences, 1):
+        start_time = current_time
+        end_time = min(current_time + time_per_sentence, duration)
+        
+        # Format timestamps as HH:MM:SS,mmm
+        def format_time(seconds):
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            millis = int((seconds % 1) * 1000)
+            return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+        
+        srt_content.append(f"{i}")
+        srt_content.append(f"{format_time(start_time)} --> {format_time(end_time)}")
+        srt_content.append(sentence.strip())
+        srt_content.append("")
+        
+        current_time = end_time
+    
+    # Write SRT file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(srt_content))
+    
+    logger.info(f"Generated subtitles: {output_path}")
+
 
 def process_pipeline_job(queue: RedisQueue, job_id: str):
     logger.info(f"Processing pipeline job {job_id}")
@@ -68,6 +124,11 @@ def process_pipeline_job(queue: RedisQueue, job_id: str):
             time.sleep(1)
             
         logger.info("Audio generation complete.")
+
+        # 5.5 Generate Subtitles (if enabled)
+        srt_output_path = os.path.join(master_output_dir, "subtitles.srt")
+        if payload.get("generate_subtitles", True):
+            generate_srt_file(text, audio_output_path, srt_output_path)
 
         # 6. Submit Visual/Motion Job based on mode
         video_output_path = os.path.join(master_output_dir, "video.mp4")

@@ -15,6 +15,8 @@ class PipelineRequest(BaseModel):
     voice_id: Optional[str] = None
     # Mode options: "motion" (SadTalker), "lipsync" (Wav2Lip), "emage" (future full-body)
     mode: Literal["motion", "lipsync", "emage"] = "motion"
+    # Generate subtitle track alongside video
+    generate_subtitles: bool = True
 
 class MotionRequest(BaseModel):
     source_image: str
