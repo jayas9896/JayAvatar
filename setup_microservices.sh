@@ -105,7 +105,14 @@ fi
 SADTALKER_PREPROCESS="services/motion/SadTalker/src/face3d/util/preprocess.py"
 if [ -f "$SADTALKER_PREPROCESS" ]; then
     sed -i 's/category=np.VisibleDeprecationWarning/category=DeprecationWarning/' "$SADTALKER_PREPROCESS"
-    echo "      Patched SadTalker for NumPy 2.0 compatibility"
+    echo "      Patched SadTalker preprocess.py for NumPy 2.0"
+fi
+
+# Patch 3: SadTalker - np.float removed in NumPy 2.0
+SADTALKER_AWING="services/motion/SadTalker/src/face3d/util/my_awing_arch.py"
+if [ -f "$SADTALKER_AWING" ]; then
+    sed -i 's/np\.float,/float,/g' "$SADTALKER_AWING"
+    echo "      Patched SadTalker my_awing_arch.py for NumPy 2.0"
 fi
 
 echo ""
