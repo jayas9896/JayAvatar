@@ -61,11 +61,36 @@ def process_job(queue: RedisQueue, job_id: str):
             '--still',                  # Anchor face position (prevents floating)
         ]
 
-        logger.info(f"Running SadTalker: {' '.join(cmd)}")
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=SADTALKER_DIR)
+        # Timeout configuration (5 minutes)
+        TIMEOUT_SECONDS = 300
+        
+        logger.info(f"[{job_id[:8]}] Starting SadTalker (timeout: {TIMEOUT_SECONDS}s)")
+        logger.info(f"[{job_id[:8]}] Source: {os.path.basename(source_image)}")
+        logger.info(f"[{job_id[:8]}] Audio: {os.path.basename(driven_audio)}")
+        
+        start_time = time.time()
+        
+        try:
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                cwd=SADTALKER_DIR,
+                timeout=TIMEOUT_SECONDS
+            )
+            elapsed = time.time() - start_time
+            logger.info(f"[{job_id[:8]}] SadTalker completed in {elapsed:.1f}s")
+            
+        except subprocess.TimeoutExpired:
+            elapsed = time.time() - start_time
+            error_msg = f"TIMEOUT: Job exceeded {TIMEOUT_SECONDS}s limit (ran for {elapsed:.1f}s)"
+            logger.error(f"[{job_id[:8]}] {error_msg}")
+            queue.update_job_status(job_id, "failed", error=error_msg)
+            return
 
         if result.returncode != 0:
-            logger.error(f"SadTalker failed: {result.stderr}")
+            logger.error(f"[{job_id[:8]}] SadTalker failed (exit code {result.returncode})")
+            logger.error(f"[{job_id[:8]}] stderr: {result.stderr[:300]}")
             queue.update_job_status(job_id, "failed", error=result.stderr[:500])
             return
 
@@ -76,13 +101,15 @@ def process_job(queue: RedisQueue, job_id: str):
         if output_files:
             generated_file = output_files[0]
             os.rename(generated_file, output_path)
-            logger.info(f"Motion video saved to: {output_path}")
+            logger.info(f"[{job_id[:8]}] SUCCESS: Video saved to {output_path}")
             queue.update_job_status(job_id, "completed", result=output_path)
         else:
-            queue.update_job_status(job_id, "failed", error="No output video found")
+            error_msg = "No output video file found after SadTalker completed"
+            logger.error(f"[{job_id[:8]}] {error_msg}")
+            queue.update_job_status(job_id, "failed", error=error_msg)
 
     except Exception as e:
-        logger.exception(f"Error processing motion job {job_id}: {e}")
+        logger.exception(f"[{job_id[:8]}] EXCEPTION: {e}")
         queue.update_job_status(job_id, "failed", error=str(e))
 
 
