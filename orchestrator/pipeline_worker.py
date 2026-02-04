@@ -69,27 +69,27 @@ def process_pipeline_job(queue: RedisQueue, job_id: str):
             
         logger.info("Audio generation complete.")
 
-        # 6. Submit Visual Job
+        # 6. Submit Motion Job (SadTalker - provides lip-sync + head motion + blinking)
         video_output_path = os.path.join(master_output_dir, "video.mp4")
-        visual_payload = {
-            "audio_path": audio_output_path,
-            "video_path": video_input_path,
+        motion_payload = {
+            "source_image": video_input_path,  # SadTalker uses source_image
+            "driven_audio": audio_output_path,
             "output_path": video_output_path
         }
         
-        visual_job_id = queue.submit_job("visual", visual_payload)
-        logger.info(f"Submitted Visual Job {visual_job_id}. Waiting for completion...")
+        motion_job_id = queue.submit_job("motion", motion_payload)
+        logger.info(f"Submitted Motion Job {motion_job_id}. Waiting for completion...")
         
-        # 7. Wait for Visual Job
+        # 7. Wait for Motion Job
         while True:
-            visual_status = queue.get_job_status(visual_job_id)
-            if visual_status["status"] == "completed":
+            motion_status = queue.get_job_status(motion_job_id)
+            if motion_status["status"] == "completed":
                 break
-            elif visual_status["status"] == "failed":
-                raise Exception(f"Video generation failed: {visual_status.get('error')}")
+            elif motion_status["status"] == "failed":
+                raise Exception(f"Motion generation failed: {motion_status.get('error')}")
             time.sleep(1)
             
-        logger.info("Video generation complete.")
+        logger.info("Motion video generation complete.")
         
         # 8. Success
         queue.update_job_status(job_id, "completed", result=video_output_path)

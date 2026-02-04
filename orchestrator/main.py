@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from schemas import JobRequest, JobResponse, VisualRequest, PipelineRequest
+from schemas import JobRequest, JobResponse, VisualRequest, PipelineRequest, MotionRequest
 from queue_manager import RedisQueue
 import uvicorn
 
@@ -19,6 +19,12 @@ async def animate_face(request: VisualRequest):
 @app.post("/pipeline", response_model=JobResponse)
 async def run_pipeline(request: PipelineRequest):
     job_id = queue.submit_job("pipeline", request.model_dump())
+    return JobResponse(job_id=job_id, status="queued")
+
+@app.post("/motion", response_model=JobResponse)
+async def generate_motion(request: MotionRequest):
+    """Generate talking head video with natural motion (SadTalker)."""
+    job_id = queue.submit_job("motion", request.model_dump())
     return JobResponse(job_id=job_id, status="queued")
 
 @app.get("/status/{job_id}")

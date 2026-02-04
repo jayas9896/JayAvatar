@@ -266,12 +266,15 @@ def main():
 		
 		for p, f, c in zip(pred, frames, coords):
 			y1, y2, x1, x2 = c
+			# Resize generated face patch to match the ROI dimensions
+			p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
+			
 			# --- Alpha Blending / Feathering ---
 			# Goal: Remove the hard "cut-out" edge around the generated lips.
 			# Method: Create a transparency mask, blur it (feathering), and alpha-blend 
 			# the generated lip region (p) with the original face (roi).
 			
-			# Create a soft mask (white)
+			# Create a soft mask (white) matching resized p's dimensions
 			mask = np.full((p.shape[0], p.shape[1]), 255, dtype=np.float32)
 			# Blur the mask to feather edges (Kernel: 51x51, Sigma: 16)
 			mask = cv2.GaussianBlur(mask, (51, 51), 16) / 255.0
