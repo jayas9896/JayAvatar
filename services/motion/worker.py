@@ -55,9 +55,10 @@ def process_job(queue: RedisQueue, job_id: str):
             '--driven_audio', driven_audio,
             '--checkpoint_dir', CHECKPOINT_DIR,
             '--result_dir', RESULT_DIR,
-            '--enhancer', 'gfpgan',  # Enable face enhancement
-            '--size', '512',          # Higher quality
-            '--preprocess', 'full',   # Keep full frame context
+            '--enhancer', 'gfpgan',    # Enable face enhancement
+            '--size', '512',            # Higher quality
+            '--preprocess', 'full',     # Keep full frame context
+            '--still',                  # Anchor face position (prevents floating)
         ]
 
         logger.info(f"Running SadTalker: {' '.join(cmd)}")
