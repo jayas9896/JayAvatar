@@ -1,19 +1,18 @@
 # Dependabot configuration
 # Checks for dependency updates daily
+# Note: Root requirements.txt is not scanned (TTS has Python version restrictions)
 
 version: 2
 updates:
-  # Python dependencies
+  # Orchestrator requirements
   - package-ecosystem: "pip"
-    directory: "/"
+    directory: "/orchestrator"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps"
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "python"
+      - "orchestrator"
 
   # Orchestrator requirements
   - package-ecosystem: "pip"
