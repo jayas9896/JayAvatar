@@ -99,6 +99,9 @@ def align_img(img, lm, lm3D, mask=None, target_size=224., rescale_factor=102.):
 
     # processing the image
     img_new, lm_new, mask_new = resize_n_crop_img(img, lm, t, s, target_size=target_size, mask=mask)
-    trans_params = np.array([w0, h0, s, t[0], t[1]])
+    # Flatten t values to scalars for numpy compatibility
+    t0 = float(t[0].item() if hasattr(t[0], 'item') else t[0])
+    t1 = float(t[1].item() if hasattr(t[1], 'item') else t[1])
+    trans_params = np.array([w0, h0, s, t0, t1])
 
     return trans_params, img_new, lm_new, mask_new
