@@ -171,3 +171,38 @@ tail -f logs/motion.log        # SadTalker worker
 tail -f logs/pipeline.log      # Pipeline orchestrator
 ```
 
+---
+
+## Testing
+
+### Run Tests Locally
+
+```bash
+pip install pydantic pyyaml
+python3 tests/test_basic.py
+```
+
+### Test Coverage
+
+| Test | Description |
+|------|-------------|
+| `test_imports` | Verify core modules load |
+| `test_schema_validation` | Pydantic model validation |
+| `test_config_defaults` | Config returns valid defaults |
+| `test_srt_generation` | Subtitle file generation |
+| `test_assets_exist` | Sample files present |
+
+### Test Assets
+
+Located in `tests/assets/`:
+- `test_face.jpg` - Sample face image for testing
+
+### GitHub Actions
+
+Tests run automatically on:
+- Push to `main` or `feature/*`
+- Pull requests to `main`
+
+> **Note:** GPU inference tests are skipped on GitHub (no GPU available).
+
+
